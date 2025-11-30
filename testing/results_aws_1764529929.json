@@ -1,0 +1,49 @@
+{
+  "environment": "aws",
+  "timestamp": "2025-11-30T13:11:53.112522",
+  "tests": {
+    "health_check": {
+      "avg_latency_ms": 81.17656707763672,
+      "min_latency_ms": 65.38200378417969,
+      "max_latency_ms": 115.84210395812988,
+      "p50_latency_ms": 76.07746124267578
+    },
+    "search_query": {
+      "query": "alpha",
+      "num_requests": 100,
+      "avg_latency_ms": 78.12905788421631,
+      "min_latency_ms": 65.31214714050293,
+      "max_latency_ms": 132.37285614013672,
+      "p50_latency_ms": 73.7771987915039,
+      "p95_latency_ms": 107.82217979431152,
+      "p99_latency_ms": 132.37285614013672,
+      "avg_results_found": 19
+    },
+    "different_terms": {
+      "alpha": {
+        "avg_latency_ms": 74.64195489883423,
+        "p95_latency_ms": 98.71912002563477
+      },
+      "beta": {
+        "avg_latency_ms": 73.12792539596558,
+        "p95_latency_ms": 80.14321327209473
+      },
+      "gamma": {
+        "avg_latency_ms": 94.13795471191406,
+        "p95_latency_ms": 188.45582008361816
+      },
+      "electronics": {
+        "avg_latency_ms": 73.05753231048584,
+        "p95_latency_ms": 79.51498031616211
+      },
+      "sku": {
+        "avg_latency_ms": 76.24882459640503,
+        "p95_latency_ms": 82.97014236450195
+      }
+    },
+    "get_product": {
+      "avg_latency_ms": 78.83729934692383,
+      "p95_latency_ms": 93.53303909301758
+    }
+  }
+}

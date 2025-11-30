@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-11-30T14:29:24.978710",
+  "total_requests": 164,
+  "total_failures": 0,
+  "avg_response_time": 56.6148955731707,
+  "min_response_time": 30.509832999999986,
+  "max_response_time": 346.3005409999997,
+  "percentiles": {
+    "p50": 44,
+    "p75": 69,
+    "p95": 95,
+    "p99": 180.0
+  },
+  "rps": 10.980529608019852,
+  "endpoints": {
+    
