@@ -1,4 +1,51 @@
-**.tfvars
-**.tfstate
-**.tfstate.*
-**/.terraform/
+# Terraform
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+*.tfplan
+*.tfvars
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+
+# Test Results
+results_*.json
+locust_*.csv
+*.log
+
+# AWS
+.aws/
+
+# Docker
+*.tar.gz
+lambda-deployment.zip
