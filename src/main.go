@@ -25,11 +25,17 @@ type Handler struct {
 }
 
 func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	storageType := os.Getenv("STORAGE_TYPE")
+	if storageType == "" {
+		storageType = "memory"
+	}
+
 	response := map[string]interface{}{
-		"status":    "healthy",
-		"timestamp": time.Now().Format(time.RFC3339),
-		"service":   "product-api",
-		"storage":   os.Getenv("STORAGE_TYPE"),
+		"status":      "healthy",
+		"timestamp":   time.Now().Format(time.RFC3339),
+		"service":     "product-api",
+		"storage":     storageType,
+		"environment": getEnvironment(),
 	}
 	internal.WriteJSON(w, http.StatusOK, response)
 }
@@ -59,6 +65,7 @@ func (h *Handler) SearchProducts(w http.ResponseWriter, r *http.Request) {
 		"checked_count": checkedCount,
 		"search_time":   fmt.Sprintf("%.2fms", float64(searchTime.Microseconds())/1000.0),
 		"query":         query,
+		"environment":   getEnvironment(),
 	}
 
 	internal.WriteJSON(w, http.StatusOK, response)
@@ -139,6 +146,17 @@ func validateProduct(p api.Product) (string, bool) {
 	return "", true
 }
 
+func getEnvironment() string {
+	if os.Getenv("AWS_ENDPOINT_URL") != "" {
+		return "localstack"
+	}
+	if os.Getenv("STORAGE_TYPE") == "dynamodb" {
+		return "aws-cloud"
+	}
+	return "local-memory"
+}
+
+// 🔥 修复后的函数 - 支持 DynamoDB！
 func initializeStore() internal.ProductStore {
 	storageType := os.Getenv("STORAGE_TYPE")
 
@@ -150,14 +168,30 @@ func initializeStore() internal.ProductStore {
 			tableName = "products"
 		}
 
-		cfg, err := config.LoadDefaultConfig(context.Background())
+		ctx := context.Background()
+		cfg, err := config.LoadDefaultConfig(ctx)
 		if err != nil {
 			fmt.Printf("❌ Failed to load AWS config: %v\n", err)
 			fmt.Println("Falling back to memory store...")
 			return createMemoryStore()
 		}
 
-		client := dynamodb.NewFromConfig(cfg)
+		// 🔥 关键：检查 LocalStack endpoint
+		endpointURL := os.Getenv("AWS_ENDPOINT_URL")
+		var client *dynamodb.Client
+
+		if endpointURL != "" {
+			// LocalStack configuration
+			fmt.Printf("📍 Using LocalStack endpoint: %s\n", endpointURL)
+			client = dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
+				o.BaseEndpoint = &endpointURL
+			})
+		} else {
+			// Regular AWS configuration
+			fmt.Println("☁️  Using AWS DynamoDB")
+			client = dynamodb.NewFromConfig(cfg)
+		}
+
 		store := internal.NewDynamoDBStore(client, tableName)
 
 		count, err := store.CountItems()
@@ -167,11 +201,16 @@ func initializeStore() internal.ProductStore {
 			return createMemoryStore()
 		}
 
-		fmt.Printf("✅ Connected to DynamoDB table '%s' with %d products\n", tableName, count)
+		environment := "AWS"
+		if endpointURL != "" {
+			environment = "LocalStack"
+		}
+		fmt.Printf("✅ Connected to %s DynamoDB table '%s' with %d products\n", environment, tableName, count)
 		return store
 	}
 
-	fmt.Println("💾 Initializing in-memory store...")
+	// Default: use in-memory storage
+	fmt.Println("💾 Using in-memory storage")
 	return createMemoryStore()
 }
 
@@ -181,7 +220,7 @@ func createMemoryStore() internal.ProductStore {
 	categories := []string{"Electronics", "Books", "Home", "Sports", "Toys"}
 	brands := []string{"Alpha", "Beta", "Gamma", "Delta", "Epsilon"}
 
-	fmt.Println("Loading products into memory...")
+	fmt.Println("Loading 10,000 products into memory...")
 	startTime := time.Now()
 
 	for i := 1; i <= 10000; i++ {
@@ -197,8 +236,8 @@ func createMemoryStore() internal.ProductStore {
 			SomeOtherId:  int32((i % 100) + 1),
 		})
 
-		if i%20000 == 0 {
-			fmt.Printf("Loaded %d products...\n", i)
+		if i%2000 == 0 {
+			fmt.Printf("  Loaded %d products...\n", i)
 		}
 	}
 
@@ -236,12 +275,27 @@ func main() {
 		port = "8080"
 	}
 
-	fmt.Printf("🚀 Server starting on :%s\n", port)
+	env := getEnvironment()
+	storageType := os.Getenv("STORAGE_TYPE")
+	if storageType == "" {
+		storageType = "memory"
+	}
+
+	fmt.Println()
+	fmt.Println("================================================")
+	fmt.Printf("🚀 Product API Server\n")
+	fmt.Println("================================================")
+	fmt.Printf("Environment:  %s\n", env)
+	fmt.Printf("Storage:      %s\n", storageType)
+	fmt.Printf("Port:         %s\n", port)
+	fmt.Println()
 	fmt.Println("Endpoints:")
 	fmt.Println("  GET  /health")
 	fmt.Println("  GET  /products/search?q={query}&limit={limit}")
 	fmt.Println("  GET  /products/{id}")
 	fmt.Println("  POST /products/{id}/details")
+	fmt.Println("================================================")
+	fmt.Println()
 
 	_ = http.ListenAndServe(":"+port, srv)
 }
